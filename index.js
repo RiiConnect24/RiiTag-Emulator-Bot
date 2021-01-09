@@ -1,14 +1,17 @@
 const discord = require("discord.js");
 const fs = require("fs");
 const axios = require("axios").default;
+const dbDriver = require("./dbdriver");
+const path = require("path");
 
-if (!fs.existsSync("./keys.json")) {
-    fs.copyFileSync("./keys.template.json", "./keys.json");
-    console.log("Update your token in keys.json and restart the bot");
+if (!fs.existsSync("./config.json")) {
+    fs.copyFileSync("./config.template.json", "./config.json");
+    console.log("Update your token in config.json and restart the bot");
     process.exit();
 }
 
-const keys = JSON.parse(fs.readFileSync("./keys.json"));
+const config = JSON.parse(fs.readFileSync("./config.json"));
+const db = new dbDriver(path.join(config.riitagDir, "users.db"));
 
 const bot = new discord.Client({
     ws: {
@@ -19,7 +22,9 @@ const bot = new discord.Client({
             "GUILD_MESSAGE_REACTIONS",
             "GUILD_BANS",
             "GUILD_INVITES",
-            "GUILD_PRESENCES"
+            "GUILD_PRESENCES",
+            "DIRECT_MESSAGES",
+            "DIRECT_MESSAGE_REACTIONS"
         ]
     }
 });
@@ -28,46 +33,59 @@ bot.on("ready", () => {
     console.log("Bot connected");
 });
 
-bot.on("presenceUpdate", (_, newPresence) => {
-    newPresence.activities.forEach(async activity => {
+bot.on("presenceUpdate", (_, presence) => {
+    presence.activities.forEach(async activity => {
         if (activity.name == "Dolphin Emulator") {
-            const gameRegex = /.*\((.*)\)/;
+            const gameRegex = /(.*)\((.*)\)/;
             const regexRes = gameRegex.exec(activity.details);
             if (!regexRes) return;
-            const game = regexRes[1];
-            if (game) {
-                var key = keys[newPresence.userID];
-                var url = `http://tag.rc24.xyz/wii?key=${key}&game=${game}`;
+            const gameID = regexRes[2];
+            const game = regexRes[1]
+            if (gameID.length > 6) {
+                console.log(`${presence.user.username} is playing a game that isn't available on RiiTag.`);
+                return;
+            }
+            if (gameID) {
+                var key = await getKey(presence.user.id);
+                if (!key) {
+                    console.log(`${presence.user.username} does not have a registered account on RiiTag.`);
+                    return;
+                }
+                var url = `http://tag.rc24.xyz/wii?key=${key}&game=${gameID}`;
+                // console.log(url);
                 var res = await axios.get(url);
                 if (res.status == 200) {
-                    console.log(`${newPresence.user.username} is now playing ${activity.details}.`);
+                    console.log(`${presence.user.username} is now playing ${activity.details}.`);
+                } else {
+                    console.log(`Request for ${presence.user.username} failed with response code ${res.status} for game ${activity.details}.`);
                 }
+            } else {
+                console.log("No Game ID detected");
             }
         }
     });
 });
 
-bot.on("message", async message => {
-    if (message.author.bot) {
-        return;
-    }
+bot.on("messageReactionAdd", (reaction, user) => {
+    console.log("Hi there!!");
+    console.log(reaction.emoji);
+    if (reaction.message.author.id == bot.user.id && reaction.emoji == bot.emojis.resolve("🚫")) {
+        console.log(`${user.username} opted out of future RiiTag notifications.`);
 
-    if (message.content.startsWith("^")) {
-        var m = message.content.replace("^", "").split(" ");
-        var c = m[0];
-        var args = m.splice(1);
-
-        if (c == "key") {
-            if (!args[0]) {
-                await message.reply("No key");
-                return;
-            }
-            keys[message.author.id] = args[0];
-            fs.writeFileSync("./keys.json", JSON.stringify(keys, null, 4));
-            await message.reply("Done");
-            return;
-        }
     }
 });
 
-bot.login(keys.token);
+function saveConfig() {
+    fs.writeFileSync("config.json", JSON.stringify(config, null, 4));
+}
+
+async function getKey(id) {
+    var dbres = await db.get("users", "snowflake", id);
+    if (dbres == undefined) {
+        return undefined;
+    } else {
+        return dbres.key;
+    }
+}
+
+bot.login(config.token);
