@@ -71,9 +71,10 @@ bot.on("presenceUpdate", (_, presence) => {
                     console.log(`${presence.user.username} does not have a registered account on RiiTag.`);
                     return;
                 }
+
                 var url = `http://tag.rc24.xyz/3ds?key=${key}&game=${currGame}`;
-                console.log(url);
-                var res = await axios.get(url);
+                //console.log(url);
+                var res = await axios.get(encodeURI(url));
                 if (res.status == 200) {
                     console.log(`${presence.user.username} is now playing ${activity.state}.`);
                 } else {
