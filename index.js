@@ -64,7 +64,7 @@ bot.on("presenceUpdate", (_, presence) => {
             }
         }
         if (activity.name == "citra") {
-            currGame = activity.state
+            currGame = activity.state.replace(/&/g, "%26")
             if (currGame) {
                 var key = await getKey(presence.user.id);
                 if (!key) {
@@ -85,7 +85,7 @@ bot.on("presenceUpdate", (_, presence) => {
             }
         }
         if (activity.name == "Cemu") {
-            currGame = activity.state.replace("Playing", "").trim();
+            currGame = activity.state.replace("Playing", "").trim().replace(/&/g, "%26");
             if (currGame) {
                 var key = await getKey(presence.user.id);
                 if (!key) {
