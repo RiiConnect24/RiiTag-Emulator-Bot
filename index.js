@@ -63,6 +63,49 @@ bot.on("presenceUpdate", (_, presence) => {
                 console.log("No Game ID detected");
             }
         }
+        if (activity.name == "citra") {
+            currGame = activity.state;
+            if (currGame) {
+                currGame = currGame.replace(/&/g, "%26");
+                var key = await getKey(presence.user.id);
+                if (!key) {
+                    console.log(`${presence.user.username} does not have a registered account on RiiTag.`);
+                    return;
+                }
+
+                var url = `http://tag.rc24.xyz/3ds?key=${key}&game=${currGame}`;
+                //console.log(url);
+                var res = await axios.get(encodeURI(url));
+                if (res.status == 200) {
+                    console.log(`${presence.user.username} is now playing ${activity.state}.`);
+                } else {
+                    console.log(`Request for ${presence.user.username} failed with response code ${res.status} for game ${activity.state}}.`);
+                }
+            } else {
+                console.log("No Game detected");
+            }
+        }
+        if (activity.name == "Cemu") {
+            currGame = activity.state;
+            if ( currGame && currGame != "Idling" ) {
+                currGame = currGame.replace("Playing", "").trim().replace(/&/g, "%26");
+                var key = await getKey(presence.user.id);
+                if (!key) {
+                    console.log(`${presence.user.username} does not have a registered account on RiiTag.`);
+                    return;
+                }
+                var url = `http://localhost:3000/wiiu?key=${key}&game=${currGame}&source=Cemu`;
+                //console.log(url);
+                var res = await axios.get(encodeURI(url));
+                if (res.status == 200) {
+                    console.log(`${presence.user.username} is now playing ${activity.state}.`);
+                } else {
+                    console.log(`Request for ${presence.user.username} failed with response code ${res.status} for game ${activity.state}}.`);
+                }
+            } else {
+                console.log("No Game detected");
+            }
+        }
     });
 });
 
