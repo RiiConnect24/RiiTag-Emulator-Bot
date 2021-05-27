@@ -64,8 +64,9 @@ bot.on("presenceUpdate", (_, presence) => {
             }
         }
         if (activity.name == "citra") {
-            currGame = activity.state.replace(/&/g, "%26")
+            currGame = activity.state;
             if (currGame) {
+                currGame = currGame.replace(/&/g, "%26");
                 var key = await getKey(presence.user.id);
                 if (!key) {
                     console.log(`${presence.user.username} does not have a registered account on RiiTag.`);
@@ -85,8 +86,9 @@ bot.on("presenceUpdate", (_, presence) => {
             }
         }
         if (activity.name == "Cemu") {
-            currGame = activity.state.replace("Playing", "").trim().replace(/&/g, "%26");
-            if (currGame) {
+            currGame = activity.state;
+            if ( currGame && currGame != "Idling" ) {
+                currGame = currGame.replace("Playing", "").trim().replace(/&/g, "%26");
                 var key = await getKey(presence.user.id);
                 if (!key) {
                     console.log(`${presence.user.username} does not have a registered account on RiiTag.`);
