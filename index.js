@@ -94,7 +94,7 @@ bot.on("presenceUpdate", (_, presence) => {
                     console.log(`${presence.user.username} does not have a registered account on RiiTag.`);
                     return;
                 }
-                var url = `http://localhost:3000/wiiu?key=${key}&game=${currGame}&source=Cemu`;
+                var url = `http://tag.rc24.xyz/wiiu?key=${key}&game=${currGame}&source=Cemu`;
                 //console.log(url);
                 var res = await axios.get(encodeURI(url));
                 if (res.status == 200) {
