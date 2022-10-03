@@ -1,4 +1,7 @@
 {
+    "host": "MYSQL HOST GOES HERE",
+    "user": "MYSQL USER GOES HERE",
+    "password": "MYSQL PASSWORD GOES HERE",
+    "database": "MYSQL DATABASE GOES HERE",
     "token": "TOKEN GOES HERE",
-    "riitagDir": ""
 }
