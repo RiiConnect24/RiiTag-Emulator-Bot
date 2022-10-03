@@ -1,8 +1,8 @@
 const discord = require("discord.js");
 const fs = require("fs");
 const axios = require("axios").default;
-const dbDriver = require("./dbdriver");
 const path = require("path");
+var mysql = require("mysql");
 
 if (!fs.existsSync("./config.json")) {
     fs.copyFileSync("./config.template.json", "./config.json");
@@ -11,7 +11,15 @@ if (!fs.existsSync("./config.json")) {
 }
 
 const config = JSON.parse(fs.readFileSync("./config.json"));
-const db = new dbDriver(path.join(config.riitagDir, "users.db"));
+
+var connection = mysql.createConnection({
+  host     : config.host,
+  user     : config.user,
+  password : config.password,
+  database : config.database
+});
+
+connection.connect();
 
 const bot = new discord.Client({
     ws: {
@@ -40,13 +48,15 @@ bot.on("presenceUpdate", (_, presence) => {
             const regexRes = gameRegex.exec(activity.details);
             if (!regexRes) return;
             const gameID = regexRes[2];
-            const game = regexRes[1]
+            const game = regexRes[1];
+            console.log(gameID);
             if (gameID.length > 6) {
                 console.log(`${presence.user.username} is playing a game that isn't available on RiiTag.`);
                 return;
             }
             if (gameID) {
                 var key = await getKey(presence.user.id);
+                console.log(key);
                 if (!key) {
                     console.log(`${presence.user.username} does not have a registered account on RiiTag.`);
                     return;
@@ -123,12 +133,12 @@ function saveConfig() {
 }
 
 async function getKey(id) {
-    var dbres = await db.get("users", "snowflake", id);
-    if (dbres == undefined) {
-        return undefined;
-    } else {
-        return dbres.key;
-    }
+    return new Promise((resolve, reject) => {
+        connection.query("SELECT randkey from `user` WHERE `username` = ?", [id], function (err, res, fields) {
+           if (err) return reject(err);
+           return resolve(res[0].randkey);
+        });
+    })
 }
 
 bot.login(config.token);
