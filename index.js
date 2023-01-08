@@ -119,15 +119,6 @@ bot.on("presenceUpdate", (_, presence) => {
     });
 });
 
-bot.on("messageReactionAdd", (reaction, user) => {
-    console.log("Hi there!!");
-    console.log(reaction.emoji);
-    if (reaction.message.author.id == bot.user.id && reaction.emoji == bot.emojis.resolve("🚫")) {
-        console.log(`${user.username} opted out of future RiiTag notifications.`);
-
-    }
-});
-
 function saveConfig() {
     fs.writeFileSync("config.json", JSON.stringify(config, null, 4));
 }
