@@ -118,7 +118,7 @@ bot.on("presenceUpdate", (_, presence) => {
         }
         if (activity.name == "Yuzu") {
             currGame = activity.state;
-            if ( currGame && curGame != "Currently not in game" ) {
+            if ( currGame && currGame != "Currently not in game" ) {
                 currGame = currGame.trim().replace(/&/g, "%26");
                 var key = await getKey(presence.user.id);
                 if (!key) {
