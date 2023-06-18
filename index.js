@@ -175,6 +175,48 @@ bot.on("presenceUpdate", (_, presence) => {
                 console.log("No Game detected");
             }
         }
+        if (activity.name == "Yuzu") {
+            currGame = activity.state;
+            if ( currGame && currGame != "Currently not in game" ) {
+                currGame = currGame.trim().replace(/&/g, "%26");
+                var key = await getKey(presence.user.id);
+                if (!key) {
+                    console.log(`${presence.user.username} does not have a registered account on RiiTag.`);
+                    return;
+                }
+                var url = `http://tag.rc24.xyz/switch?key=${key}&game=${currGame}&source=Yuzu`;
+                //console.log(url);
+                var res = await axios.get(encodeURI(url));
+                if (res.status == 200) {
+                    console.log(`${presence.user.username} is now playing ${activity.state}.`);
+                } else {
+                    console.log(`Request for ${presence.user.username} failed with response code ${res.status} for game ${activity.state}}.`);
+                }
+            } else {
+                console.log("No Game detected");
+            }
+        }
+        if (activity.name == "Ryujinx") {
+            currGame = activity.state;
+            if ( currGame && currGame != "Idling" ) {
+                currGame = currGame.replace("Playing", "").trim().replace(/&/g, "%26");
+                var key = await getKey(presence.user.id);
+                if (!key) {
+                    console.log(`${presence.user.username} does not have a registered account on RiiTag.`);
+                    return;
+                }
+                var url = `http://tag.rc24.xyz/switch?key=${key}&game=${currGame}&source=Ryujinx`;
+                //console.log(url);
+                var res = await axios.get(encodeURI(url));
+                if (res.status == 200) {
+                    console.log(`${presence.user.username} is now playing ${activity.state}.`);
+                } else {
+                    console.log(`Request for ${presence.user.username} failed with response code ${res.status} for game ${activity.state}}.`);
+                }
+            } else {
+                console.log("No Game detected");
+            }
+        }
     });
 });
 
