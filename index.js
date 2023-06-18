@@ -1,3 +1,7 @@
+process.on('uncaughtException', (err) => {
+  console.error('Uncaught Exception:', err);
+});
+
 const discord = require("discord.js");
 const fs = require("fs");
 const axios = require("axios").default;
@@ -49,6 +53,10 @@ bot.on("presenceUpdate", (_, presence) => {
             if (!regexRes) return;
             const gameID = regexRes[2];
             const game = regexRes[1];
+            if (gameID.includes(",")) {
+                gameID = gameID.split(",")[0];
+                console.log(gameID);
+            }
             console.log(gameID);
             if (gameID.length > 6) {
                 console.log(`${presence.user.username} is playing a game that isn't available on RiiTag.`);
@@ -61,35 +69,51 @@ bot.on("presenceUpdate", (_, presence) => {
                     console.log(`${presence.user.username} does not have a registered account on RiiTag.`);
                     return;
                 }
-                var url = `http://tag.rc24.xyz/wii?key=${key}&game=${gameID}`;
-                // console.log(url);
-                var res = await axios.get(url);
-                if (res.status == 200) {
-                    console.log(`${presence.user.username} is now playing ${activity.details}.`);
-                } else {
-                    console.log(`Request for ${presence.user.username} failed with response code ${res.status} for game ${activity.details}.`);
+                try {
+                    var url = `http://tag.rc24.xyz/wii?key=${key}&game=${gameID}`;
+                    //console.log(url);
+                    var res = await axios.get(encodeURI(url));
+                    if (res.status == 200) {
+                        console.log(`${presence.user.username} is now playing ${activity.details}.`);
+                    } else {
+                        console.log(`Request for ${presence.user.username} failed with response code ${res.status} for game ${activity.details}.`);
+                    }
+                } catch (error) {
+                    console.log(`Error occurred during the request: ${error.message}`);
                 }
             } else {
                 console.log("No Game ID detected");
             }
         }
-        if (activity.name == "citra") {
-            currGame = activity.state;
+        if (activity.name == "citra" || activity.name == "Nintendo 3DS" || activity.name.includes("(3DS)")) {
+            if (activity.name == "citra") {
+                currGame = activity.state;
+            }
+            if (activity.name == "Nintendo 3DS") {
+                currGame = activity.details;
+            }
+            if (activity.name.includes("(3DS)")) {
+                currGame = activity.name.replace(" (3DS)", "");
+            }
             if (currGame) {
-                currGame = currGame.replace(/&/g, "%26");
+                currGame = currGame.replace(/&/g, "%26").replace("\n", " ");
                 var key = await getKey(presence.user.id);
                 if (!key) {
                     console.log(`${presence.user.username} does not have a registered account on RiiTag.`);
                     return;
                 }
 
-                var url = `http://tag.rc24.xyz/3ds?key=${key}&game=${currGame}`;
-                //console.log(url);
-                var res = await axios.get(encodeURI(url));
-                if (res.status == 200) {
-                    console.log(`${presence.user.username} is now playing ${activity.state}.`);
-                } else {
-                    console.log(`Request for ${presence.user.username} failed with response code ${res.status} for game ${activity.state}}.`);
+                try {
+                    var url = `http://tag.rc24.xyz/3ds?key=${key}&gameName=${currGame}`;
+                    //console.log(url);
+                    var res = await axios.get(encodeURI(url));
+                    if (res.status == 200) {
+                        console.log(`${presence.user.username} is now playing ${currGame}.`);
+                    } else {
+                        console.log(`Request for ${presence.user.username} failed with response code ${res.status} for game ${currGame}.`);
+                    }
+                } catch (error) {
+                    console.log(`Error occurred during the request: ${error.message}`);
                 }
             } else {
                 console.log("No Game detected");
@@ -104,19 +128,63 @@ bot.on("presenceUpdate", (_, presence) => {
                     console.log(`${presence.user.username} does not have a registered account on RiiTag.`);
                     return;
                 }
-                var url = `http://tag.rc24.xyz/wiiu?key=${key}&game=${currGame}&source=Cemu`;
-                //console.log(url);
-                var res = await axios.get(encodeURI(url));
-                if (res.status == 200) {
-                    console.log(`${presence.user.username} is now playing ${activity.state}.`);
-                } else {
-                    console.log(`Request for ${presence.user.username} failed with response code ${res.status} for game ${activity.state}}.`);
+                try {
+                    var url = `http://tag.rc24.xyz/wiiu?key=${key}&origin=Cemu&gameTID=${currGame}`;
+                    //console.log(url);
+                    var res = await axios.get(encodeURI(url));
+                    if (res.status == 200) {
+                        console.log(`${presence.user.username} is now playing ${currGame}.`);
+                    } else {
+                        console.log(`Request for ${presence.user.username} failed with response code ${res.status} for game ${currGame}.`);
+                    }
+                } catch (error) {
+                    console.log(`Error occurred during the request: ${error.message}`);
+                }
+            } else {
+                console.log("No Game detected");
+            }
+        }
+        if (activity.name == "Nintendo Switch" || activity.name == "Switch") {
+            if (activity.name == "Nintendo Switch") {
+                currGame = activity.details;
+            }
+            if (activity.name == "Switch") {
+                currGame = activity.details.replace("Playing ", "");
+            }
+            if (currGame) {
+                currGame = currGame.replace(/&/g, "%26").replace("\n", " ");
+                var key = await getKey(presence.user.id);
+                if (!key) {
+                    console.log(`${presence.user.username} does not have a registered account on RiiTag.`);
+                    return;
+                }
+
+                try {
+                    var url = `http://tag.rc24.xyz/switch?key=${key}&gameName=${currGame}`;
+                    //console.log(url);
+                    var res = await axios.get(encodeURI(url));
+                    if (res.status == 200) {
+                        console.log(`${presence.user.username} is now playing ${currGame}.`);
+                    } else {
+                        console.log(`Request for ${presence.user.username} failed with response code ${res.status} for game ${currGame}.`);
+                    }
+                } catch (error) {
+                    console.log(`Error occurred during the request: ${error.message}`);
                 }
             } else {
                 console.log("No Game detected");
             }
         }
     });
+});
+
+bot.on("messageReactionAdd", (reaction, user) => {
+    console.log("Hi there!!");
+    console.log(reaction.emoji);
+    if (reaction.message.author.id == bot.user.id && reaction.emoji == bot.emojis.resolve("🚫")) {
+        console.log(`${user.username} opted out of future RiiTag notifications.`);
+
+    }
 });
 
 function saveConfig() {
